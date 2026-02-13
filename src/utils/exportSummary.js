@@ -7,7 +7,6 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
   const memberAllergies = allergies || [];
   const memberGrowth = (growthRecords || []).sort((a, b) => new Date(b.date) - new Date(a.date));
   const memberCheckups = checkupLogs[member.id] || {};
-  const isChild = member.age <= 18;
 
   function formatDate(d) {
     return new Date(d).toLocaleDateString();
@@ -54,7 +53,7 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
   }
 
   // Growth data (children only)
-  if (isChild && memberGrowth.length > 0) {
+  if (memberGrowth.length > 0) {
     html += `<h2>Growth Records</h2>`;
     html += `<table><thead><tr><th>Date</th><th>Height (cm)</th><th>Weight (kg)</th><th>BMI</th></tr></thead><tbody>`;
     memberGrowth.forEach((r) => {

@@ -6,6 +6,22 @@ function calculateBMI(heightCm, weightKg) {
   return (weightKg / (heightM * heightM)).toFixed(1);
 }
 
+function bmiCategory(bmi) {
+  if (!bmi) return '';
+  const val = parseFloat(bmi);
+  if (val < 18.5) return 'Underweight';
+  if (val < 25) return 'Normal';
+  if (val < 30) return 'Overweight';
+  return 'Obese';
+}
+
+const BMI_CATEGORY_COLORS = {
+  Underweight: { bg: 'var(--warning-light)', color: '#856404' },
+  Normal: { bg: 'var(--success-light)', color: 'var(--success)' },
+  Overweight: { bg: 'var(--warning-light)', color: '#856404' },
+  Obese: { bg: 'var(--danger-light)', color: 'var(--danger)' },
+};
+
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
@@ -122,7 +138,11 @@ export default function GrowthSection({ records, onAdd, onDelete }) {
                   <td>{formatDate(r.date)}</td>
                   <td>{displayHeight(r)}</td>
                   <td>{displayWeight(r)}</td>
-                  <td>{calculateBMI(r.height, r.weight) || '-'}</td>
+                  <td>
+                    {calculateBMI(r.height, r.weight)
+                      ? <>{calculateBMI(r.height, r.weight)} <span className="bmi-category-badge" style={{ background: BMI_CATEGORY_COLORS[bmiCategory(calculateBMI(r.height, r.weight))]?.bg, color: BMI_CATEGORY_COLORS[bmiCategory(calculateBMI(r.height, r.weight))]?.color }}>{bmiCategory(calculateBMI(r.height, r.weight))}</span></>
+                      : '-'}
+                  </td>
                   <td>
                     <button className="btn-dismiss" title="Delete record" onClick={() => onDelete(r.id)}>&times;</button>
                   </td>

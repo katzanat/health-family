@@ -22,7 +22,6 @@ export default function MemberDashboard({
   const memberEntries = entries.filter((e) => e.memberId === member.id);
   const memberAllergies = allergies[member.id] || [];
   const memberGrowth = growthRecords[member.id] || [];
-  const isChild = member.age <= 18;
 
   return (
     <div className="member-dashboard">
@@ -42,13 +41,11 @@ export default function MemberDashboard({
         onDelete={(allergyId) => onDeleteAllergy(member.id, allergyId)}
       />
 
-      {isChild && (
-        <GrowthSection
-          records={memberGrowth}
-          onAdd={(record) => onAddGrowthRecord(member.id, record)}
-          onDelete={(recordId) => onDeleteGrowthRecord(member.id, recordId)}
-        />
-      )}
+      <GrowthSection
+        records={memberGrowth}
+        onAdd={(record) => onAddGrowthRecord(member.id, record)}
+        onDelete={(recordId) => onDeleteGrowthRecord(member.id, recordId)}
+      />
 
       <CheckupList member={member} checkupLogs={checkupLogs} onMarkDone={onMarkCheckupDone} dismissedCheckups={dismissedCheckups} onDismissCheckup={onDismissCheckup} />
 

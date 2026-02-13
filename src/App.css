@@ -996,6 +996,15 @@
   background: var(--primary-light);
 }
 
+.bmi-category-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
 /* ============================================
    Entries Header Actions
    ============================================ */
