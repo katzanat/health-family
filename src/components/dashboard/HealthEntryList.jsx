@@ -12,7 +12,6 @@ export default function HealthEntryList({ entries, members }) {
 
   return (
     <div className="health-entry-list">
-      <h3>Health Entries</h3>
       {sorted.map((e) => (
         <HealthEntryCard key={e.id} entry={e} memberName={memberMap[e.memberId] || 'Unknown'} />
       ))}
