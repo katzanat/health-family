@@ -42,7 +42,11 @@ function daysBetween(dateStr1, dateStr2) {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString();
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatDateFull(dateStr) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function daysFromNow(dateStr) {
@@ -52,60 +56,97 @@ function daysFromNow(dateStr) {
   return Math.round((target - today) / (1000 * 60 * 60 * 24));
 }
 
+function todayStr() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().split('T')[0];
+}
+
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// ── Timeline helpers ──
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function buildTimelineDays(periodLogs, ovulationLogs, nextPeriodDate, nextOvulationDate, fertileStart, fertileEnd) {
+const SYMPTOM_OPTIONS = ['Cramps', 'Bloating', 'Headache', 'Fatigue', 'Mood swings', 'Back pain', 'Nausea', 'Breast tenderness'];
+
+// ── Calendar builder ──
+
+function buildCalendarDays(periodLogs, ovulationLogs, nextPeriodDate, nextOvulationDate, fertileStart, fertileEnd) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
+  const todayISO = today.toISOString().split('T')[0];
 
-  // Center on today: ~17 days before and ~17 days after
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 17);
+  // Show current month centered: start from 1st of previous month to end of next month
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const startDate = new Date(firstOfMonth);
+  // Go back to the Sunday of the week containing the 1st
+  startDate.setDate(startDate.getDate() - startDate.getDay());
 
-  const days = [];
-  for (let i = 0; i < 35; i++) {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
+  const lastOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const endDate = new Date(lastOfMonth);
+  // Go forward to the Saturday of the week containing the last day
+  endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+
+  const weeks = [];
+  let currentWeek = [];
+  const d = new Date(startDate);
+
+  while (d <= endDate) {
     const dateStr = d.toISOString().split('T')[0];
+    const isCurrentMonth = d.getMonth() === today.getMonth();
 
-    // Check if this day is a period day
     const isPeriod = periodLogs.some((p) => {
       const end = p.endDate || p.startDate;
       return dateStr >= p.startDate && dateStr <= end;
     });
-
-    // Check if ovulation logged on this day
     const isOvulation = ovulationLogs.some((o) => o.date === dateStr);
-
-    // Check predicted
-    const isPredictedPeriod = nextPeriodDate && dateStr >= nextPeriodDate && dateStr <= addDays(nextPeriodDate, 4);
+    const isPredictedPeriod = nextPeriodDate && dateStr >= nextPeriodDate && dateStr <= addDays(nextPeriodDate, 4) && !isPeriod;
     const isPredictedOvulation = !isOvulation && nextOvulationDate === dateStr;
-    const isFertile = fertileStart && fertileEnd && dateStr >= fertileStart && dateStr <= fertileEnd;
+    const isFertile = fertileStart && fertileEnd && dateStr >= fertileStart && dateStr <= fertileEnd && !isPeriod && !isOvulation && !isPredictedOvulation;
 
-    days.push({
+    currentWeek.push({
       date: dateStr,
       dayNum: d.getDate(),
-      isToday: dateStr === todayStr,
+      isToday: dateStr === todayISO,
+      isCurrentMonth,
       isPeriod,
       isOvulation,
-      isPredictedPeriod: isPredictedPeriod && !isPeriod,
+      isPredictedPeriod,
       isPredictedOvulation,
-      isFertile: isFertile && !isPeriod && !isOvulation && !isPredictedOvulation,
+      isFertile,
     });
+
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+    d.setDate(d.getDate() + 1);
   }
-  return days;
+  if (currentWeek.length > 0) weeks.push(currentWeek);
+
+  const monthLabel = `${MONTH_NAMES[today.getMonth()]} ${today.getFullYear()}`;
+  return { weeks, monthLabel };
+}
+
+// ── Combined log builder ──
+
+function buildCombinedLog(periodLogs, ovulationLogs) {
+  const items = [];
+  periodLogs.forEach((p) => items.push({ ...p, sortDate: p.startDate }));
+  ovulationLogs.forEach((o) => items.push({ ...o, sortDate: o.date }));
+  items.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+  return items.slice(0, 8);
 }
 
 // ── Component ──
 
 export default function PeriodSection({ records, onAdd, onDelete }) {
-  const [tab, setTab] = useState('overview');
-  const [periodForm, setPeriodForm] = useState({ startDate: '', endDate: '', flow: 'Medium', symptoms: '', notes: '' });
+  const [showPeriodForm, setShowPeriodForm] = useState(false);
+  const [showOvulationForm, setShowOvulationForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [periodForm, setPeriodForm] = useState({ startDate: '', endDate: '', flow: 'Medium', symptoms: [], otherSymptom: '', notes: '' });
   const [ovulationForm, setOvulationForm] = useState({ date: '', notes: '' });
   const [settingsForm, setSettingsForm] = useState(null);
 
@@ -120,27 +161,63 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
   const fertileStart = nextOvulationDate ? addDays(nextOvulationDate, -5) : null;
   const fertileEnd = nextOvulationDate ? addDays(nextOvulationDate, 1) : null;
 
-  const timelineDays = useMemo(
-    () => buildTimelineDays(periodLogs, ovulationLogs, nextPeriodDate, nextOvulationDate, fertileStart, fertileEnd),
+  const calendar = useMemo(
+    () => buildCalendarDays(periodLogs, ovulationLogs, nextPeriodDate, nextOvulationDate, fertileStart, fertileEnd),
     [periodLogs, ovulationLogs, nextPeriodDate, nextOvulationDate, fertileStart, fertileEnd]
   );
 
+  const combinedLog = useMemo(() => buildCombinedLog(periodLogs, ovulationLogs), [periodLogs, ovulationLogs]);
+
+  const nextPeriodDays = nextPeriodDate ? daysFromNow(nextPeriodDate) : null;
+
+  // ── Quick log handlers ──
+
+  function handleQuickLogPeriod() {
+    onAdd({
+      id: generateId(),
+      type: 'period',
+      startDate: todayStr(),
+      endDate: todayStr(),
+      flow: 'Medium',
+      symptoms: '',
+      notes: '',
+    });
+  }
+
+  function handleQuickLogOvulation() {
+    onAdd({
+      id: generateId(),
+      type: 'ovulation',
+      date: todayStr(),
+      notes: '',
+    });
+  }
+
   // ── Form handlers ──
+
+  function toggleSymptom(symptom) {
+    setPeriodForm((f) => ({
+      ...f,
+      symptoms: f.symptoms.includes(symptom) ? f.symptoms.filter((s) => s !== symptom) : [...f.symptoms, symptom],
+    }));
+  }
 
   function handleSubmitPeriod(e) {
     e.preventDefault();
     if (!periodForm.startDate) return;
+    const allSymptoms = [...periodForm.symptoms];
+    if (periodForm.otherSymptom.trim()) allSymptoms.push(periodForm.otherSymptom.trim());
     onAdd({
       id: generateId(),
       type: 'period',
       startDate: periodForm.startDate,
       endDate: periodForm.endDate || periodForm.startDate,
       flow: periodForm.flow,
-      symptoms: periodForm.symptoms,
+      symptoms: allSymptoms.join(', '),
       notes: periodForm.notes,
     });
-    setPeriodForm({ startDate: '', endDate: '', flow: 'Medium', symptoms: '', notes: '' });
-    setTab('overview');
+    setPeriodForm({ startDate: '', endDate: '', flow: 'Medium', symptoms: [], otherSymptom: '', notes: '' });
+    setShowPeriodForm(false);
   }
 
   function handleSubmitOvulation(e) {
@@ -153,7 +230,7 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
       notes: ovulationForm.notes,
     });
     setOvulationForm({ date: '', notes: '' });
-    setTab('overview');
+    setShowOvulationForm(false);
   }
 
   function handleSaveSettings(e) {
@@ -166,153 +243,57 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
       customCycleLength: len,
     });
     setSettingsForm(null);
-    setTab('overview');
+    setShowSettings(false);
   }
 
-  // ── Duration helper ──
   function periodDuration(p) {
     return daysBetween(p.startDate, p.endDate || p.startDate) + 1;
   }
 
-  return (
-    <div className="period-section">
-      <div className="period-header">
-        <h3>Period & Ovulation Tracking</h3>
-      </div>
-
-      <div className="period-tabs">
-        {['overview', 'period', 'ovulation', 'settings'].map((t) => (
-          <button
-            key={t}
-            className={`period-tab${tab === t ? ' active' : ''}`}
-            onClick={() => {
-              setTab(t);
-              if (t === 'settings' && settingsForm === null) {
-                setSettingsForm(settings.customCycleLength || 28);
-              }
-            }}
-          >
-            {t === 'overview' ? 'Overview' : t === 'period' ? 'Log Period' : t === 'ovulation' ? 'Log Ovulation' : 'Settings'}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Overview ── */}
-      {tab === 'overview' && (
-        <div>
-          <div className="period-overview">
-            <div className="period-stat-card">
-              <div className="period-stat-label">Avg Cycle</div>
-              <div className="period-stat-value">{avgCycle} days</div>
-              {periodLogs.length < 2 && <div className="period-stat-hint">Default (log 2+ periods to calculate)</div>}
-            </div>
-            <div className="period-stat-card">
-              <div className="period-stat-label">Next Period</div>
-              <div className="period-stat-value">
-                {nextPeriodDate ? formatDate(nextPeriodDate) : 'N/A'}
-              </div>
-              {nextPeriodDate && (
-                <span className="period-prediction-badge">
-                  {daysFromNow(nextPeriodDate) >= 0 ? `in ${daysFromNow(nextPeriodDate)} days` : `${Math.abs(daysFromNow(nextPeriodDate))} days ago`}
-                </span>
-              )}
-            </div>
-            <div className="period-stat-card">
-              <div className="period-stat-label">Next Ovulation</div>
-              <div className="period-stat-value">
-                {nextOvulationDate ? formatDate(nextOvulationDate) : 'N/A'}
-              </div>
-              {nextOvulationDate && (
-                <span className="period-prediction-badge">
-                  {daysFromNow(nextOvulationDate) >= 0 ? `in ${daysFromNow(nextOvulationDate)} days` : `${Math.abs(daysFromNow(nextOvulationDate))} days ago`}
-                </span>
-              )}
-            </div>
-            <div className="period-stat-card">
-              <div className="period-stat-label">Fertile Window</div>
-              <div className="period-stat-value">
-                {fertileStart && fertileEnd ? `${formatDate(fertileStart)} - ${formatDate(fertileEnd)}` : 'N/A'}
-              </div>
-            </div>
-          </div>
-
-          {/* Timeline strip */}
-          <div className="period-timeline-wrapper">
-            <div className="period-timeline">
-              {timelineDays.map((day) => (
-                <div
-                  key={day.date}
-                  className={
-                    'period-timeline-day' +
-                    (day.isPeriod ? ' period' : '') +
-                    (day.isOvulation ? ' ovulation' : '') +
-                    (day.isPredictedPeriod ? ' predicted-period' : '') +
-                    (day.isPredictedOvulation ? ' predicted-ovulation' : '') +
-                    (day.isFertile ? ' fertile' : '') +
-                    (day.isToday ? ' today' : '')
-                  }
-                  title={day.date}
-                >
-                  <span className="period-timeline-num">{day.dayNum}</span>
-                </div>
-              ))}
-            </div>
-            <div className="period-timeline-legend">
-              <span className="period-legend-item"><span className="period-legend-dot period"></span> Period</span>
-              <span className="period-legend-item"><span className="period-legend-dot ovulation"></span> Ovulation</span>
-              <span className="period-legend-item"><span className="period-legend-dot fertile"></span> Fertile</span>
-              <span className="period-legend-item"><span className="period-legend-dot predicted"></span> Predicted</span>
-              <span className="period-legend-item"><span className="period-legend-dot today-dot"></span> Today</span>
-            </div>
-          </div>
-
-          {/* Recent period logs */}
-          {periodLogs.length > 0 && (
-            <div className="period-log-section">
-              <h4>Recent Period Logs</h4>
-              <div className="period-log-list">
-                {[...periodLogs].reverse().slice(0, 5).map((p) => (
-                  <div key={p.id} className="period-log-item period-border">
-                    <div className="period-log-item-info">
-                      <strong>{formatDate(p.startDate)}{p.endDate && p.endDate !== p.startDate ? ` - ${formatDate(p.endDate)}` : ''}</strong>
-                      <span className="period-log-duration">{periodDuration(p)} day{periodDuration(p) !== 1 ? 's' : ''}</span>
-                      <span className={`period-flow-badge flow-${p.flow.toLowerCase()}`}>{p.flow}</span>
-                      {p.symptoms && <span className="period-log-symptoms">{p.symptoms}</span>}
-                    </div>
-                    <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Delete</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recent ovulation logs */}
-          {ovulationLogs.length > 0 && (
-            <div className="period-log-section">
-              <h4>Recent Ovulation Logs</h4>
-              <div className="period-log-list">
-                {ovulationLogs.slice(0, 5).map((o) => (
-                  <div key={o.id} className="period-log-item ovulation-border">
-                    <div className="period-log-item-info">
-                      <strong>{formatDate(o.date)}</strong>
-                      {o.notes && <span className="period-log-notes">{o.notes}</span>}
-                    </div>
-                    <button className="btn btn-danger btn-sm" onClick={() => onDelete(o.id)}>Delete</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {periodLogs.length === 0 && ovulationLogs.length === 0 && (
-            <p className="period-empty">No period or ovulation data logged yet. Use the tabs above to start tracking.</p>
-          )}
+  // ── Empty state ──
+  if (combinedLog.length === 0 && !showPeriodForm && !showOvulationForm) {
+    return (
+      <div className="period-section">
+        <div className="period-header">
+          <h3>Period & Ovulation Tracking</h3>
+          <button className="period-gear-btn" onClick={() => { setShowSettings(!showSettings); if (!showSettings) setSettingsForm(settings.customCycleLength || 28); }} title="Cycle settings">&#9881;</button>
         </div>
-      )}
 
-      {/* ── Log Period ── */}
-      {tab === 'period' && (
-        <form className="period-form" onSubmit={handleSubmitPeriod}>
+        {showSettings && (
+          <form className="period-inline-form period-settings-form" onSubmit={handleSaveSettings}>
+            <div className="form-group">
+              <label>Default Cycle Length (days)</label>
+              <input type="number" min="20" max="45" value={settingsForm ?? 28} onChange={(e) => setSettingsForm(e.target.value)} />
+            </div>
+            <div className="period-form-actions">
+              <button type="submit" className="btn btn-primary btn-sm">Save</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowSettings(false)}>Cancel</button>
+            </div>
+          </form>
+        )}
+
+        <div className="period-empty-state">
+          <div className="period-empty-icon">&#128197;</div>
+          <p className="period-empty-title">Start tracking your cycle</p>
+          <p className="period-empty-desc">Log your period to get predictions for your next cycle, ovulation, and fertile window.</p>
+          <div className="period-empty-actions">
+            <button className="btn btn-primary" onClick={() => setShowPeriodForm(true)}>Log Your First Period</button>
+            <button className="btn btn-secondary" onClick={() => setShowOvulationForm(true)}>Log Ovulation</button>
+          </div>
+        </div>
+
+        {showPeriodForm && renderPeriodForm()}
+        {showOvulationForm && renderOvulationForm()}
+      </div>
+    );
+  }
+
+  // ── Period form renderer ──
+  function renderPeriodForm() {
+    return (
+      <form className="period-inline-form" onSubmit={handleSubmitPeriod}>
+        <h4>Log Period</h4>
+        <div className="period-form-row">
           <div className="form-group">
             <label>Start Date *</label>
             <input type="date" value={periodForm.startDate} onChange={(e) => setPeriodForm((f) => ({ ...f, startDate: e.target.value }))} required />
@@ -329,24 +310,34 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
               <option value="Heavy">Heavy</option>
             </select>
           </div>
-          <div className="form-group">
-            <label>Symptoms</label>
-            <input type="text" placeholder="e.g. cramps, headache..." value={periodForm.symptoms} onChange={(e) => setPeriodForm((f) => ({ ...f, symptoms: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label>Symptoms</label>
+          <div className="period-symptom-chips">
+            {SYMPTOM_OPTIONS.map((s) => (
+              <button type="button" key={s} className={`period-chip${periodForm.symptoms.includes(s) ? ' active' : ''}`} onClick={() => toggleSymptom(s)}>{s}</button>
+            ))}
           </div>
-          <div className="form-group">
-            <label>Notes</label>
-            <input type="text" placeholder="Optional notes..." value={periodForm.notes} onChange={(e) => setPeriodForm((f) => ({ ...f, notes: e.target.value }))} />
-          </div>
-          <div className="period-form-actions">
-            <button type="submit" className="btn btn-primary">Save Period Log</button>
-            <button type="button" className="btn btn-secondary" onClick={() => setTab('overview')}>Cancel</button>
-          </div>
-        </form>
-      )}
+          <input type="text" className="period-other-symptom" placeholder="Other symptom..." value={periodForm.otherSymptom} onChange={(e) => setPeriodForm((f) => ({ ...f, otherSymptom: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label>Notes</label>
+          <input type="text" placeholder="Optional notes..." value={periodForm.notes} onChange={(e) => setPeriodForm((f) => ({ ...f, notes: e.target.value }))} />
+        </div>
+        <div className="period-form-actions">
+          <button type="submit" className="btn btn-primary btn-sm">Save</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPeriodForm(false)}>Cancel</button>
+        </div>
+      </form>
+    );
+  }
 
-      {/* ── Log Ovulation ── */}
-      {tab === 'ovulation' && (
-        <form className="period-form" onSubmit={handleSubmitOvulation}>
+  // ── Ovulation form renderer ──
+  function renderOvulationForm() {
+    return (
+      <form className="period-inline-form" onSubmit={handleSubmitOvulation}>
+        <h4>Log Ovulation</h4>
+        <div className="period-form-row">
           <div className="form-group">
             <label>Date *</label>
             <input type="date" value={ovulationForm.date} onChange={(e) => setOvulationForm((f) => ({ ...f, date: e.target.value }))} required />
@@ -355,35 +346,168 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
             <label>Notes</label>
             <input type="text" placeholder="Optional notes..." value={ovulationForm.notes} onChange={(e) => setOvulationForm((f) => ({ ...f, notes: e.target.value }))} />
           </div>
+        </div>
+        <div className="period-form-actions">
+          <button type="submit" className="btn btn-primary btn-sm">Save</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowOvulationForm(false)}>Cancel</button>
+        </div>
+      </form>
+    );
+  }
+
+  // ── Main render ──
+  return (
+    <div className="period-section">
+      <div className="period-header">
+        <h3>Period & Ovulation Tracking</h3>
+        <button className="period-gear-btn" onClick={() => { setShowSettings(!showSettings); if (!showSettings) setSettingsForm(settings.customCycleLength || 28); }} title="Cycle settings">&#9881;</button>
+      </div>
+
+      {/* Settings inline (gear icon toggle) */}
+      {showSettings && (
+        <form className="period-inline-form period-settings-form" onSubmit={handleSaveSettings}>
+          <div className="period-form-row">
+            <div className="form-group">
+              <label>Default Cycle Length (days)</label>
+              <input type="number" min="20" max="45" value={settingsForm ?? (settings.customCycleLength || 28)} onChange={(e) => setSettingsForm(e.target.value)} />
+              <span className="period-settings-info">
+                Calculated average: <strong>{avgCycle} days</strong>
+                {periodLogs.length < 2 ? ' (default — log 2+ periods for auto)' : ` (from ${periodLogs.length} logs)`}
+              </span>
+            </div>
+          </div>
           <div className="period-form-actions">
-            <button type="submit" className="btn btn-primary">Save Ovulation Log</button>
-            <button type="button" className="btn btn-secondary" onClick={() => setTab('overview')}>Cancel</button>
+            <button type="submit" className="btn btn-primary btn-sm">Save</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowSettings(false)}>Cancel</button>
           </div>
         </form>
       )}
 
-      {/* ── Settings ── */}
-      {tab === 'settings' && (
-        <form className="period-form period-settings" onSubmit={handleSaveSettings}>
-          <div className="form-group">
-            <label>Custom Cycle Length (days)</label>
-            <input
-              type="number"
-              min="20"
-              max="45"
-              value={settingsForm ?? (settings.customCycleLength || 28)}
-              onChange={(e) => setSettingsForm(e.target.value)}
-            />
-            <span className="period-settings-info">
-              Current calculated average: <strong>{avgCycle} days</strong>
-              {periodLogs.length < 2 ? ' (using default — log 2+ periods for auto calculation)' : ` (based on ${periodLogs.length} period logs)`}
-            </span>
+      {/* Hero prediction (#11) */}
+      <div className="period-hero">
+        {nextPeriodDate ? (
+          <>
+            <div className="period-hero-main">
+              {nextPeriodDays >= 0 ? (
+                <>
+                  <span className="period-hero-number">{nextPeriodDays}</span>
+                  <span className="period-hero-label">day{nextPeriodDays !== 1 ? 's' : ''} until next period</span>
+                </>
+              ) : (
+                <>
+                  <span className="period-hero-number period-hero-late">{Math.abs(nextPeriodDays)}</span>
+                  <span className="period-hero-label">day{Math.abs(nextPeriodDays) !== 1 ? 's' : ''} late</span>
+                </>
+              )}
+            </div>
+            <div className="period-hero-sub">Expected {formatDateFull(nextPeriodDate)}</div>
+          </>
+        ) : (
+          <div className="period-hero-main">
+            <span className="period-hero-label">Log a period to see predictions</span>
           </div>
-          <div className="period-form-actions">
-            <button type="submit" className="btn btn-primary">Save Settings</button>
-            <button type="button" className="btn btn-secondary" onClick={() => setTab('overview')}>Cancel</button>
+        )}
+      </div>
+
+      {/* Quick log buttons (#7) */}
+      <div className="period-quick-actions">
+        <button className="period-quick-btn period-quick-period" onClick={handleQuickLogPeriod}>Start Period Today</button>
+        <button className="period-quick-btn period-quick-ovulation" onClick={handleQuickLogOvulation}>Log Ovulation Today</button>
+        <button className="period-action-btn" onClick={() => { setShowPeriodForm(!showPeriodForm); setShowOvulationForm(false); }}>+ Log Period</button>
+        <button className="period-action-btn" onClick={() => { setShowOvulationForm(!showOvulationForm); setShowPeriodForm(false); }}>+ Log Ovulation</button>
+      </div>
+
+      {/* Inline forms (#1) */}
+      {showPeriodForm && renderPeriodForm()}
+      {showOvulationForm && renderOvulationForm()}
+
+      {/* Stats grid 2x2 (#2) */}
+      <div className="period-overview">
+        <div className="period-stat-card">
+          <div className="period-stat-label">Avg Cycle</div>
+          <div className="period-stat-value">{avgCycle} days</div>
+          {periodLogs.length < 2 && <div className="period-stat-hint">Default</div>}
+        </div>
+        <div className="period-stat-card">
+          <div className="period-stat-label">Next Ovulation</div>
+          <div className="period-stat-value">{nextOvulationDate ? formatDate(nextOvulationDate) : 'N/A'}</div>
+          {nextOvulationDate && <div className="period-stat-hint">{daysFromNow(nextOvulationDate) >= 0 ? `in ${daysFromNow(nextOvulationDate)} days` : `${Math.abs(daysFromNow(nextOvulationDate))} days ago`}</div>}
+        </div>
+        <div className="period-stat-card">
+          <div className="period-stat-label">Fertile Window</div>
+          <div className="period-stat-value">{fertileStart && fertileEnd ? `${formatDate(fertileStart)} - ${formatDate(fertileEnd)}` : 'N/A'}</div>
+        </div>
+        <div className="period-stat-card">
+          <div className="period-stat-label">Last Period</div>
+          <div className="period-stat-value">{lastPeriod ? formatDate(lastPeriod.startDate) : 'N/A'}</div>
+          {lastPeriod && <div className="period-stat-hint">{Math.abs(daysFromNow(lastPeriod.startDate))} days ago</div>}
+        </div>
+      </div>
+
+      {/* Calendar view (#4, #5) */}
+      <div className="period-calendar">
+        <div className="period-calendar-header">{calendar.monthLabel}</div>
+        <div className="period-calendar-grid">
+          {DAY_LABELS.map((d) => (
+            <div key={d} className="period-cal-dayname">{d}</div>
+          ))}
+          {calendar.weeks.flat().map((day) => (
+            <div
+              key={day.date}
+              className={
+                'period-cal-day' +
+                (!day.isCurrentMonth ? ' other-month' : '') +
+                (day.isPeriod ? ' period' : '') +
+                (day.isOvulation ? ' ovulation' : '') +
+                (day.isPredictedPeriod ? ' predicted-period' : '') +
+                (day.isPredictedOvulation ? ' predicted-ovulation' : '') +
+                (day.isFertile ? ' fertile' : '') +
+                (day.isToday ? ' today' : '')
+              }
+              title={day.date}
+            >
+              {day.dayNum}
+            </div>
+          ))}
+        </div>
+        <div className="period-calendar-legend">
+          <span className="period-legend-item"><span className="period-legend-dot period"></span> Period</span>
+          <span className="period-legend-item"><span className="period-legend-dot ovulation"></span> Ovulation</span>
+          <span className="period-legend-item"><span className="period-legend-dot fertile"></span> Fertile</span>
+          <span className="period-legend-item"><span className="period-legend-dot predicted"></span> Predicted</span>
+        </div>
+      </div>
+
+      {/* Combined chronological log (#12) */}
+      {combinedLog.length > 0 && (
+        <div className="period-log-section">
+          <h4>Recent Activity</h4>
+          <div className="period-log-list">
+            {combinedLog.map((item) => (
+              <div key={item.id} className={`period-log-item ${item.type === 'period' ? 'period-type' : 'ovulation-type'}`}>
+                <span className={`period-log-dot ${item.type}`}></span>
+                <div className="period-log-item-info">
+                  {item.type === 'period' ? (
+                    <>
+                      <strong>{formatDate(item.startDate)}{item.endDate && item.endDate !== item.startDate ? ` - ${formatDate(item.endDate)}` : ''}</strong>
+                      <span className="period-log-meta">
+                        {periodDuration(item)} day{periodDuration(item) !== 1 ? 's' : ''}
+                        <span className={`period-flow-badge flow-${item.flow.toLowerCase()}`}>{item.flow}</span>
+                      </span>
+                      {item.symptoms && <span className="period-log-symptoms">{item.symptoms}</span>}
+                    </>
+                  ) : (
+                    <>
+                      <strong>Ovulation - {formatDate(item.date)}</strong>
+                      {item.notes && <span className="period-log-notes">{item.notes}</span>}
+                    </>
+                  )}
+                </div>
+                <button className="period-delete-btn" onClick={() => onDelete(item.id)} title="Delete">&#128465;</button>
+              </div>
+            ))}
           </div>
-        </form>
+        </div>
       )}
     </div>
   );
