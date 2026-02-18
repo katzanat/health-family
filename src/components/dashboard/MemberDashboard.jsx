@@ -41,6 +41,17 @@ export default function MemberDashboard({
         </div>
       </div>
 
+      <div className="entries-section">
+        <div className="entries-header">
+          <h3>Health Entries</h3>
+          <div className="entries-header-actions">
+            <button className="btn btn-primary" onClick={() => onAddEntry(member.id)}>+ Add Entry</button>
+            <button className="btn btn-secondary" onClick={() => exportForDoctor(member, entries, checkupLogs, memberAllergies, memberGrowth, memberMedications, memberPeriodRecords)}>Export for Doctor</button>
+          </div>
+        </div>
+        <HealthEntryList entries={memberEntries} members={[member]} />
+      </div>
+
       <AllergySection
         allergies={memberAllergies}
         onAdd={(allergy) => onAddAllergy(member.id, allergy)}
@@ -69,17 +80,6 @@ export default function MemberDashboard({
       )}
 
       <CheckupList member={member} checkupLogs={checkupLogs} onMarkDone={onMarkCheckupDone} dismissedCheckups={dismissedCheckups} onDismissCheckup={onDismissCheckup} />
-
-      <div className="entries-section">
-        <div className="entries-header">
-          <h3>Health Entries</h3>
-          <div className="entries-header-actions">
-            <button className="btn btn-primary" onClick={() => onAddEntry(member.id)}>+ Add Entry</button>
-            <button className="btn btn-secondary" onClick={() => exportForDoctor(member, entries, checkupLogs, memberAllergies, memberGrowth, memberMedications, memberPeriodRecords)}>Export for Doctor</button>
-          </div>
-        </div>
-        <HealthEntryList entries={memberEntries} members={[member]} />
-      </div>
     </div>
   );
 }
