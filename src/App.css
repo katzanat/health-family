@@ -1006,6 +1006,143 @@
 }
 
 /* ============================================
+   Medication Section
+   ============================================ */
+.medication-section {
+  margin-top: 24px;
+}
+
+.medication-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.medication-header h3 {
+  margin: 0;
+}
+
+.medication-form {
+  background: #fff;
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.medication-subsection {
+  margin-top: 16px;
+}
+
+.medication-subsection h4 {
+  font-size: 0.95rem;
+  color: var(--gray-700);
+  margin: 0 0 10px;
+}
+
+.medication-empty {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.medication-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.medication-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #fff;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.medication-item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.medication-dosage-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.medication-freq-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.medication-notes {
+  width: 100%;
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--gray-500);
+}
+
+/* Recommended Vitamins Panel */
+.recommended-vitamins {
+  margin-top: 16px;
+  background: var(--success-light);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.recommended-vitamins h5 {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: var(--success);
+}
+
+.recommended-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recommended-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.recommended-item-info {
+  flex: 1;
+}
+
+.recommended-item-info strong {
+  display: inline;
+  margin-right: 6px;
+}
+
+.recommended-reason {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--gray-500);
+}
+
+/* ============================================
    Entries Header Actions
    ============================================ */
 .entries-header-actions {
@@ -1159,4 +1296,332 @@
     flex: 1;
     justify-content: center;
   }
+
+  .period-overview {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .period-tabs {
+    flex-wrap: wrap;
+  }
+
+  .period-timeline {
+    min-width: 600px;
+  }
+}
+
+/* ============================================
+   Period & Ovulation Section
+   ============================================ */
+.period-section {
+  margin-top: 24px;
+}
+
+.period-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.period-header h3 {
+  margin: 0;
+}
+
+.period-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.period-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  background: var(--gray-200);
+  color: var(--gray-700);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.period-tab:hover {
+  background: var(--gray-300);
+}
+
+.period-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Overview cards */
+.period-overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.period-stat-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.period-stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.period-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-900, #1a1a2e);
+  margin-bottom: 4px;
+}
+
+.period-stat-hint {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+.period-prediction-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* Forms */
+.period-form {
+  background: #fff;
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.period-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Log lists */
+.period-log-section {
+  margin-top: 20px;
+}
+
+.period-log-section h4 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: var(--gray-700);
+}
+
+.period-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.period-log-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #fff;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.period-log-item.period-border {
+  border-left: 4px solid #e74c6f;
+}
+
+.period-log-item.ovulation-border {
+  border-left: 4px solid var(--success);
+}
+
+.period-log-item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.period-log-duration {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+}
+
+.period-log-symptoms {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+.period-log-notes {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+}
+
+.period-flow-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.period-flow-badge.flow-light {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.period-flow-badge.flow-medium {
+  background: var(--warning-light);
+  color: #856404;
+}
+
+.period-flow-badge.flow-heavy {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.period-empty {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  padding: 24px;
+}
+
+/* Timeline */
+.period-timeline-wrapper {
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.period-timeline {
+  display: flex;
+  gap: 2px;
+  padding: 8px 0;
+}
+
+.period-timeline-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 36px;
+  border-radius: 4px;
+  background: var(--gray-200);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.period-timeline-num {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.period-timeline-day.period {
+  background: #e74c6f;
+}
+
+.period-timeline-day.period .period-timeline-num {
+  color: #fff;
+}
+
+.period-timeline-day.ovulation {
+  background: var(--success);
+}
+
+.period-timeline-day.ovulation .period-timeline-num {
+  color: #fff;
+}
+
+.period-timeline-day.fertile {
+  background: #d4edda;
+}
+
+.period-timeline-day.predicted-period {
+  background: transparent;
+  border: 2px dashed #e74c6f;
+}
+
+.period-timeline-day.predicted-ovulation {
+  background: transparent;
+  border: 2px dashed var(--success);
+}
+
+.period-timeline-day.today {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.period-timeline-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.period-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.period-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.period-legend-dot.period {
+  background: #e74c6f;
+}
+
+.period-legend-dot.ovulation {
+  background: var(--success);
+}
+
+.period-legend-dot.fertile {
+  background: #d4edda;
+}
+
+.period-legend-dot.predicted {
+  border: 2px dashed #e74c6f;
+  background: transparent;
+}
+
+.period-legend-dot.today-dot {
+  outline: 2px solid var(--primary);
+  background: var(--gray-200);
+}
+
+/* Settings */
+.period-settings .period-settings-info {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  margin-top: 8px;
 }

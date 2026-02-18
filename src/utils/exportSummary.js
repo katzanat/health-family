@@ -1,4 +1,4 @@
-export function generateSummaryHTML(member, entries, checkupLogs, allergies, growthRecords) {
+export function generateSummaryHTML(member, entries, checkupLogs, allergies, growthRecords, medications, periodRecords) {
   const memberEntries = entries
     .filter((e) => e.memberId === member.id)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -52,6 +52,19 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
     html += `</tbody></table>`;
   }
 
+  // Vitamins & Medications
+  const memberMedications = medications || [];
+  html += `<h2>Vitamins & Medications</h2>`;
+  if (memberMedications.length === 0) {
+    html += `<p>No vitamins or medications recorded.</p>`;
+  } else {
+    html += `<table><thead><tr><th>Name</th><th>Type</th><th>Dosage</th><th>Frequency</th></tr></thead><tbody>`;
+    memberMedications.forEach((m) => {
+      html += `<tr><td>${m.name}</td><td>${m.type}</td><td>${m.dosage || '-'}</td><td>${m.frequency || '-'}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
   // Growth data (children only)
   if (memberGrowth.length > 0) {
     html += `<h2>Growth Records</h2>`;
@@ -86,6 +99,41 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
     html += `</tbody></table>`;
   }
 
+  // Period & Ovulation Tracking (female members only)
+  const memberPeriodRecords = periodRecords || [];
+  if (member.gender === 'Female' && memberPeriodRecords.length > 0) {
+    const periodLogs = memberPeriodRecords
+      .filter((r) => r.type === 'period')
+      .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+    const ovulationLogs = memberPeriodRecords
+      .filter((r) => r.type === 'ovulation')
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    html += `<h2>Period & Ovulation Tracking</h2>`;
+
+    if (periodLogs.length > 0) {
+      html += `<h3 style="font-size:1rem;margin-top:16px;">Period Logs</h3>`;
+      html += `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Flow</th><th>Symptoms</th></tr></thead><tbody>`;
+      periodLogs.forEach((p) => {
+        html += `<tr><td>${formatDate(p.startDate)}</td><td>${p.endDate ? formatDate(p.endDate) : '-'}</td><td>${p.flow || '-'}</td><td>${p.symptoms || '-'}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+
+    if (ovulationLogs.length > 0) {
+      html += `<h3 style="font-size:1rem;margin-top:16px;">Ovulation Logs</h3>`;
+      html += `<table><thead><tr><th>Date</th><th>Notes</th></tr></thead><tbody>`;
+      ovulationLogs.forEach((o) => {
+        html += `<tr><td>${formatDate(o.date)}</td><td>${o.notes || '-'}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+
+    if (periodLogs.length === 0 && ovulationLogs.length === 0) {
+      html += `<p>No period or ovulation data recorded.</p>`;
+    }
+  }
+
   // Footer
   html += `<div class="footer">
   Generated on ${new Date().toLocaleDateString()} by Health Family App.
@@ -96,8 +144,8 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
   return html;
 }
 
-export function exportForDoctor(member, entries, checkupLogs, allergies, growthRecords) {
-  const html = generateSummaryHTML(member, entries, checkupLogs, allergies, growthRecords);
+export function exportForDoctor(member, entries, checkupLogs, allergies, growthRecords, medications, periodRecords) {
+  const html = generateSummaryHTML(member, entries, checkupLogs, allergies, growthRecords, medications, periodRecords);
   const printWindow = window.open('', '_blank');
   printWindow.document.write(html);
   printWindow.document.close();

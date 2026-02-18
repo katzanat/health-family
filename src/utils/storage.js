@@ -6,6 +6,8 @@ const KEYS = {
   DISMISSED_CHECKUPS: 'healthFamily_dismissedCheckups',
   ALLERGIES: 'healthFamily_allergies',
   GROWTH_RECORDS: 'healthFamily_growthRecords',
+  MEDICATIONS: 'healthFamily_medications',
+  PERIOD_RECORDS: 'healthFamily_periodRecords',
 };
 
 function getJSON(key) {
@@ -79,4 +81,20 @@ export function getGrowthRecords() {
 
 export function saveGrowthRecords(records) {
   setJSON(KEYS.GROWTH_RECORDS, records);
+}
+
+export function getMedications() {
+  return getJSON(KEYS.MEDICATIONS) || {};
+}
+
+export function saveMedications(medications) {
+  setJSON(KEYS.MEDICATIONS, medications);
+}
+
+export function getPeriodRecords() {
+  return getJSON(KEYS.PERIOD_RECORDS) || {};
+}
+
+export function savePeriodRecords(records) {
+  setJSON(KEYS.PERIOD_RECORDS, records);
 }

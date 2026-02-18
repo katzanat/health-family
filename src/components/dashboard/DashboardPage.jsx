@@ -38,6 +38,12 @@ export default function DashboardPage({
   growthRecords,
   onAddGrowthRecord,
   onDeleteGrowthRecord,
+  medications,
+  onAddMedication,
+  onDeleteMedication,
+  periodRecords,
+  onAddPeriodRecord,
+  onDeletePeriodRecord,
 }) {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -83,6 +89,12 @@ export default function DashboardPage({
           growthRecords={growthRecords}
           onAddGrowthRecord={onAddGrowthRecord}
           onDeleteGrowthRecord={onDeleteGrowthRecord}
+          medications={medications}
+          onAddMedication={onAddMedication}
+          onDeleteMedication={onDeleteMedication}
+          periodRecords={periodRecords}
+          onAddPeriodRecord={onAddPeriodRecord}
+          onDeletePeriodRecord={onDeletePeriodRecord}
         />
         {showModal && (
           <HealthEntryModal

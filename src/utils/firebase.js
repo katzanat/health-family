@@ -135,6 +135,18 @@ export async function writeGrowthRecords(code, records) {
   await set(recordsRef, records);
 }
 
+export async function writeMedications(code, medications) {
+  const { db } = initFirebase();
+  const medsRef = ref(db, `families/${code}/medications`);
+  await set(medsRef, medications);
+}
+
+export async function writePeriodRecords(code, records) {
+  const { db } = initFirebase();
+  const recordsRef = ref(db, `families/${code}/periodRecords`);
+  await set(recordsRef, records);
+}
+
 // ── Real-time subscriptions ──
 
 export function subscribeToFamily(code, callbacks) {
@@ -164,6 +176,14 @@ export function subscribeToFamily(code, callbacks) {
     callbacks.onGrowthRecords(snap.val() || {});
   });
 
+  const unsubMedications = onValue(ref(db, `families/${code}/medications`), (snap) => {
+    callbacks.onMedications(snap.val() || {});
+  });
+
+  const unsubPeriod = onValue(ref(db, `families/${code}/periodRecords`), (snap) => {
+    callbacks.onPeriodRecords(snap.val() || {});
+  });
+
   return () => {
     unsubMembers();
     unsubEntries();
@@ -171,5 +191,7 @@ export function subscribeToFamily(code, callbacks) {
     unsubDismissed();
     unsubAllergies();
     unsubGrowth();
+    unsubMedications();
+    unsubPeriod();
   };
 }

@@ -2,6 +2,8 @@ import CheckupList from '../checkups/CheckupList';
 import HealthEntryList from './HealthEntryList';
 import AllergySection from './AllergySection';
 import GrowthSection from './GrowthSection';
+import MedicationSection from './MedicationSection';
+import PeriodSection from './PeriodSection';
 import { exportForDoctor } from '../../utils/exportSummary';
 
 const ROLE_ICONS = {
@@ -18,10 +20,14 @@ export default function MemberDashboard({
   dismissedCheckups, onDismissCheckup,
   allergies, onAddAllergy, onDeleteAllergy,
   growthRecords, onAddGrowthRecord, onDeleteGrowthRecord,
+  medications, onAddMedication, onDeleteMedication,
+  periodRecords, onAddPeriodRecord, onDeletePeriodRecord,
 }) {
   const memberEntries = entries.filter((e) => e.memberId === member.id);
   const memberAllergies = allergies[member.id] || [];
   const memberGrowth = growthRecords[member.id] || [];
+  const memberMedications = medications[member.id] || [];
+  const memberPeriodRecords = periodRecords[member.id] || [];
 
   return (
     <div className="member-dashboard">
@@ -41,11 +47,26 @@ export default function MemberDashboard({
         onDelete={(allergyId) => onDeleteAllergy(member.id, allergyId)}
       />
 
+      <MedicationSection
+        medications={memberMedications}
+        onAdd={(med) => onAddMedication(member.id, med)}
+        onDelete={(medId) => onDeleteMedication(member.id, medId)}
+        member={member}
+      />
+
       <GrowthSection
         records={memberGrowth}
         onAdd={(record) => onAddGrowthRecord(member.id, record)}
         onDelete={(recordId) => onDeleteGrowthRecord(member.id, recordId)}
       />
+
+      {member.gender === 'Female' && (
+        <PeriodSection
+          records={memberPeriodRecords}
+          onAdd={(record) => onAddPeriodRecord(member.id, record)}
+          onDelete={(recordId) => onDeletePeriodRecord(member.id, recordId)}
+        />
+      )}
 
       <CheckupList member={member} checkupLogs={checkupLogs} onMarkDone={onMarkCheckupDone} dismissedCheckups={dismissedCheckups} onDismissCheckup={onDismissCheckup} />
 
@@ -54,7 +75,7 @@ export default function MemberDashboard({
           <h3>Health Entries</h3>
           <div className="entries-header-actions">
             <button className="btn btn-primary" onClick={() => onAddEntry(member.id)}>+ Add Entry</button>
-            <button className="btn btn-secondary" onClick={() => exportForDoctor(member, entries, checkupLogs, memberAllergies, memberGrowth)}>Export for Doctor</button>
+            <button className="btn btn-secondary" onClick={() => exportForDoctor(member, entries, checkupLogs, memberAllergies, memberGrowth, memberMedications, memberPeriodRecords)}>Export for Doctor</button>
           </div>
         </div>
         <HealthEntryList entries={memberEntries} members={[member]} />

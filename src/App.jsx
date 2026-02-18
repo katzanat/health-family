@@ -11,6 +11,8 @@ import {
   getFamilyCode, saveFamilyCode,
   getAllergies, saveAllergies,
   getGrowthRecords, saveGrowthRecords,
+  getMedications, saveMedications,
+  getPeriodRecords, savePeriodRecords,
 } from './utils/storage';
 import {
   initFirebase,
@@ -23,6 +25,8 @@ import {
   writeDismissedCheckups,
   writeAllergies,
   writeGrowthRecords,
+  writeMedications,
+  writePeriodRecords,
   subscribeToFamily,
 } from './utils/firebase';
 import './App.css';
@@ -36,6 +40,8 @@ function App() {
   const [dismissedCheckups, setDismissedCheckups] = useState(() => getDismissedCheckups());
   const [allergies, setAllergies] = useState(() => getAllergies());
   const [growthRecords, setGrowthRecords] = useState(() => getGrowthRecords());
+  const [medications, setMedications] = useState(() => getMedications());
+  const [periodRecords, setPeriodRecords] = useState(() => getPeriodRecords());
   const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | synced | error
   const [view, setView] = useState(() => (getFamilyMembers().length > 0 ? 'dashboard' : 'onboarding'));
 
@@ -107,6 +113,18 @@ function App() {
         isRemoteUpdate.current = true;
         setGrowthRecords(remoteGrowth);
         saveGrowthRecords(remoteGrowth);
+        setSyncStatus('synced');
+      },
+      onMedications: (remoteMedications) => {
+        isRemoteUpdate.current = true;
+        setMedications(remoteMedications);
+        saveMedications(remoteMedications);
+        setSyncStatus('synced');
+      },
+      onPeriodRecords: (remotePeriodRecords) => {
+        isRemoteUpdate.current = true;
+        setPeriodRecords(remotePeriodRecords);
+        savePeriodRecords(remotePeriodRecords);
         setSyncStatus('synced');
       },
     });
@@ -186,6 +204,28 @@ function App() {
     }
   }, [growthRecords]);
 
+  useEffect(() => {
+    saveMedications(medications);
+    if (isRemoteUpdate.current) {
+      isRemoteUpdate.current = false;
+      return;
+    }
+    if (familyCode && user) {
+      writeMedications(familyCode, medications).catch(() => setSyncStatus('error'));
+    }
+  }, [medications]);
+
+  useEffect(() => {
+    savePeriodRecords(periodRecords);
+    if (isRemoteUpdate.current) {
+      isRemoteUpdate.current = false;
+      return;
+    }
+    if (familyCode && user) {
+      writePeriodRecords(familyCode, periodRecords).catch(() => setSyncStatus('error'));
+    }
+  }, [periodRecords]);
+
   // ── Handlers ──
   function handleAddMember(member) {
     setMembers((prev) => [...prev, member]);
@@ -239,6 +279,34 @@ function App() {
 
   function handleDeleteGrowthRecord(memberId, recordId) {
     setGrowthRecords((prev) => ({
+      ...prev,
+      [memberId]: (prev[memberId] || []).filter((r) => r.id !== recordId),
+    }));
+  }
+
+  function handleAddMedication(memberId, med) {
+    setMedications((prev) => ({
+      ...prev,
+      [memberId]: [...(prev[memberId] || []), med],
+    }));
+  }
+
+  function handleDeleteMedication(memberId, medId) {
+    setMedications((prev) => ({
+      ...prev,
+      [memberId]: (prev[memberId] || []).filter((m) => m.id !== medId),
+    }));
+  }
+
+  function handleAddPeriodRecord(memberId, record) {
+    setPeriodRecords((prev) => ({
+      ...prev,
+      [memberId]: [...(prev[memberId] || []), record],
+    }));
+  }
+
+  function handleDeletePeriodRecord(memberId, recordId) {
+    setPeriodRecords((prev) => ({
       ...prev,
       [memberId]: (prev[memberId] || []).filter((r) => r.id !== recordId),
     }));
@@ -343,6 +411,12 @@ function App() {
         growthRecords={growthRecords}
         onAddGrowthRecord={handleAddGrowthRecord}
         onDeleteGrowthRecord={handleDeleteGrowthRecord}
+        medications={medications}
+        onAddMedication={handleAddMedication}
+        onDeleteMedication={handleDeleteMedication}
+        periodRecords={periodRecords}
+        onAddPeriodRecord={handleAddPeriodRecord}
+        onDeletePeriodRecord={handleDeletePeriodRecord}
       />
     </div>
   );
