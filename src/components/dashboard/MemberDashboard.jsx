@@ -6,7 +6,8 @@ import GrowthSection from './GrowthSection';
 import MedicationSection from './MedicationSection';
 import PeriodSection from './PeriodSection';
 import { exportForDoctor } from '../../utils/exportSummary';
-import { getRecommendedCheckups, getCheckupStatus } from '../../utils/checkupUtils';
+import { getRecommendedCheckups } from '../../data/checkupRecommendations';
+import { getCheckupStatus } from '../../utils/checkupUtils';
 
 const ROLE_ICONS = {
   Mom: '\u{1F469}',
