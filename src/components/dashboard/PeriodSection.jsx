@@ -186,12 +186,9 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
   }
 
   function handleQuickLogOvulation() {
-    onAdd({
-      id: generateId(),
-      type: 'ovulation',
-      date: todayStr(),
-      notes: '',
-    });
+    setOvulationForm({ date: todayStr(), symptoms: [], otherSymptom: '', notes: '' });
+    setShowOvulationForm(true);
+    setShowPeriodForm(false);
   }
 
   // ── Form handlers ──
