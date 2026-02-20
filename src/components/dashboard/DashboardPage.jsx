@@ -65,7 +65,7 @@ export default function DashboardPage({
     return (
       <>
         <div className="dashboard-top-bar">
-          <h1 className="app-title">Health Family</h1>
+          <h1 className="app-title">Symptom<span className="brand-accent">Nest</span></h1>
           <div className="dashboard-meta">
             {syncStatus && syncStatus !== 'idle' && (
               <span className={`sync-badge sync-${syncStatus}`}>
@@ -112,8 +112,8 @@ export default function DashboardPage({
     <div className="dashboard-page">
       <div className="dashboard-top-bar">
         <div>
-          <h1 className="app-title">Health Family</h1>
-          <p className="slogan">My Family Health Tracker</p>
+          <h1 className="app-title">Symptom<span className="brand-accent">Nest</span></h1>
+          <p className="slogan">Your family's symptoms, all in one place</p>
         </div>
         <div className="dashboard-actions">
           <button className="btn btn-primary" onClick={() => handleAddEntry('')}>+ Add Health Entry</button>

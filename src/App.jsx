@@ -349,7 +349,7 @@ function App() {
     return (
       <div className="app">
         <div className="loading-screen">
-          <h1 className="app-title">Health Family</h1>
+          <h1 className="app-title">Symptom<span className="brand-accent">Nest</span></h1>
           <p>Loading...</p>
         </div>
       </div>
