@@ -1,32 +1,54 @@
+/* ============================================
+   SymptomNest — index.css
+   Brand: Warm, friendly, family-first
+   Fonts: Fraunces (display) + DM Sans (UI)
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
 :root {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1a2b3c;
-  background-color: #f0f5fa;
+  color: #2C2420;
+  background-color: #FDF6EE;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --primary: #2e75b6;
-  --primary-dark: #1a4d80;
-  --primary-light: #e0eef9;
-  --success: #28a745;
-  --success-light: #d4edda;
-  --warning: #f0ad4e;
-  --warning-light: #fff3cd;
-  --danger: #dc3545;
-  --danger-light: #f8d7da;
-  --gray-100: #f8f9fa;
-  --gray-200: #e9ecef;
-  --gray-300: #dee2e6;
-  --gray-500: #6c757d;
-  --gray-700: #495057;
-  --gray-900: #212529;
-  --radius: 10px;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  /* ── SymptomNest Palette ── */
+  --primary:        #C4704A;   /* Terracotta — main accent */
+  --primary-dark:   #A85438;   /* Rust — hover states */
+  --primary-light:  #FDE8D8;   /* Peach — tinted backgrounds */
+
+  --secondary:      #7A9E87;   /* Sage — secondary accent */
+  --secondary-dark: #5A7D68;
+  --secondary-light:#EAF0EC;
+
+  --deep:           #2C3E35;   /* Deep Forest — dark surfaces */
+
+  --success:        #5A9E6F;
+  --success-light:  #E0F0E6;
+  --warning:        #D4882A;
+  --warning-light:  #FDF0DC;
+  --danger:         #C0443A;
+  --danger-light:   #FADDDB;
+
+  --gray-50:        #FDF6EE;   /* cream — page bg */
+  --gray-100:       #F5E6D3;   /* warm sand */
+  --gray-200:       #EAD9C8;
+  --gray-300:       #D4C4B4;
+  --gray-500:       #8A7A72;   /* driftwood */
+  --gray-700:       #4A3C36;
+  --gray-900:       #2C2420;   /* near-black warm */
+
+  --radius:         12px;
+  --radius-sm:      8px;
+  --radius-lg:      20px;
+  --shadow:         0 2px 12px rgba(44, 36, 32, 0.08);
+  --shadow-lg:      0 8px 32px rgba(44, 36, 32, 0.14);
+  --shadow-xl:      0 20px 60px rgba(44, 36, 32, 0.18);
 }
 
 * {
@@ -37,21 +59,32 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--gray-50);
 }
 
+/* ── Headings use Fraunces ── */
 h1, h2, h3, h4 {
+  font-family: 'Fraunces', serif;
   margin: 0 0 0.5em;
   color: var(--gray-900);
+  font-weight: 500;
+  line-height: 1.2;
 }
 
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.2rem; }
+h4 { font-size: 1rem; }
+
+/* ── Inputs ── */
 input, select, textarea {
-  font-family: inherit;
+  font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.95rem;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 1.5px solid var(--gray-300);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   width: 100%;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   background: #fff;
   color: var(--gray-900);
 }
@@ -59,22 +92,27 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(46,117,182,0.15);
+  box-shadow: 0 0 0 3px rgba(196, 112, 74, 0.15);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--gray-300);
 }
 
 textarea {
   resize: vertical;
 }
 
+/* ── Buttons ── */
 button {
-  font-family: inherit;
+  font-family: 'DM Sans', system-ui, sans-serif;
   cursor: pointer;
   border: none;
-  border-radius: 6px;
+  border-radius: 50px;
   font-size: 0.95rem;
   font-weight: 500;
-  padding: 10px 20px;
-  transition: background 0.2s, transform 0.1s;
+  padding: 10px 22px;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
 }
 
 button:active {
