@@ -70,6 +70,7 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const SYMPTOM_OPTIONS = ['Cramps', 'Bloating', 'Headache', 'Fatigue', 'Mood swings', 'Back pain', 'Nausea', 'Breast tenderness'];
+const OVULATION_SYMPTOM_OPTIONS = ['Mittelschmerz', 'Bloating', 'Spotting', 'Mood changes', 'Increased libido', 'Cervical mucus', 'Breast tenderness', 'Fatigue'];
 
 // ── Calendar builder ──
 
@@ -147,7 +148,7 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
   const [showOvulationForm, setShowOvulationForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [periodForm, setPeriodForm] = useState({ startDate: '', endDate: '', flow: 'Medium', symptoms: [], otherSymptom: '', notes: '' });
-  const [ovulationForm, setOvulationForm] = useState({ date: '', notes: '' });
+  const [ovulationForm, setOvulationForm] = useState({ date: '', symptoms: [], otherSymptom: '', notes: '' });
   const [settingsForm, setSettingsForm] = useState(null);
 
   const periodLogs = useMemo(() => getPeriodLogs(records), [records]);
@@ -202,6 +203,13 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
     }));
   }
 
+  function toggleOvulationSymptom(symptom) {
+    setOvulationForm((f) => ({
+      ...f,
+      symptoms: f.symptoms.includes(symptom) ? f.symptoms.filter((s) => s !== symptom) : [...f.symptoms, symptom],
+    }));
+  }
+
   function handleSubmitPeriod(e) {
     e.preventDefault();
     if (!periodForm.startDate) return;
@@ -223,13 +231,16 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
   function handleSubmitOvulation(e) {
     e.preventDefault();
     if (!ovulationForm.date) return;
+    const allSymptoms = [...ovulationForm.symptoms];
+    if (ovulationForm.otherSymptom.trim()) allSymptoms.push(ovulationForm.otherSymptom.trim());
     onAdd({
       id: generateId(),
       type: 'ovulation',
       date: ovulationForm.date,
+      symptoms: allSymptoms.join(', '),
       notes: ovulationForm.notes,
     });
-    setOvulationForm({ date: '', notes: '' });
+    setOvulationForm({ date: '', symptoms: [], otherSymptom: '', notes: '' });
     setShowOvulationForm(false);
   }
 
@@ -342,10 +353,19 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
             <label>Date *</label>
             <input type="date" value={ovulationForm.date} onChange={(e) => setOvulationForm((f) => ({ ...f, date: e.target.value }))} required />
           </div>
-          <div className="form-group">
-            <label>Notes</label>
-            <input type="text" placeholder="Optional notes..." value={ovulationForm.notes} onChange={(e) => setOvulationForm((f) => ({ ...f, notes: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label>Symptoms</label>
+          <div className="period-symptom-chips">
+            {OVULATION_SYMPTOM_OPTIONS.map((s) => (
+              <button type="button" key={s} className={`period-chip${ovulationForm.symptoms.includes(s) ? ' active' : ''}`} onClick={() => toggleOvulationSymptom(s)}>{s}</button>
+            ))}
           </div>
+          <input type="text" className="period-other-symptom" placeholder="Other symptom..." value={ovulationForm.otherSymptom} onChange={(e) => setOvulationForm((f) => ({ ...f, otherSymptom: e.target.value }))} />
+        </div>
+        <div className="form-group">
+          <label>Notes</label>
+          <input type="text" placeholder="Optional notes..." value={ovulationForm.notes} onChange={(e) => setOvulationForm((f) => ({ ...f, notes: e.target.value }))} />
         </div>
         <div className="period-form-actions">
           <button type="submit" className="btn btn-primary btn-sm">Save</button>
@@ -499,6 +519,7 @@ export default function PeriodSection({ records, onAdd, onDelete }) {
                   ) : (
                     <>
                       <strong>Ovulation - {formatDate(item.date)}</strong>
+                      {item.symptoms && <span className="period-log-symptoms">{item.symptoms}</span>}
                       {item.notes && <span className="period-log-notes">{item.notes}</span>}
                     </>
                   )}

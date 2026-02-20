@@ -122,9 +122,9 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
 
     if (ovulationLogs.length > 0) {
       html += `<h3 style="font-size:1rem;margin-top:16px;">Ovulation Logs</h3>`;
-      html += `<table><thead><tr><th>Date</th><th>Notes</th></tr></thead><tbody>`;
+      html += `<table><thead><tr><th>Date</th><th>Symptoms</th><th>Notes</th></tr></thead><tbody>`;
       ovulationLogs.forEach((o) => {
-        html += `<tr><td>${formatDate(o.date)}</td><td>${o.notes || '-'}</td></tr>`;
+        html += `<tr><td>${formatDate(o.date)}</td><td>${o.symptoms || '-'}</td><td>${o.notes || '-'}</td></tr>`;
       });
       html += `</tbody></table>`;
     }
