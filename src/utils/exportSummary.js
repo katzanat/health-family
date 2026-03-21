@@ -14,7 +14,7 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
 
   let html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<title>Health Summary - ${member.name}</title>
+<title>Health Summary — ${member.name}</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 24px; color: #333; }
   h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
@@ -87,10 +87,10 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
     html += `</tbody></table>`;
   }
 
-  // Recent health entries
-  html += `<h2>Recent Health Entries</h2>`;
+  // Recent symptoms
+  html += `<h2>Recent Symptoms</h2>`;
   if (memberEntries.length === 0) {
-    html += `<p>No health entries recorded.</p>`;
+    html += `<p>No symptoms recorded.</p>`;
   } else {
     html += `<table><thead><tr><th>Date</th><th>Location</th><th>Description</th><th>Action Taken</th></tr></thead><tbody>`;
     memberEntries.forEach((e) => {
@@ -136,7 +136,7 @@ export function generateSummaryHTML(member, entries, checkupLogs, allergies, gro
 
   // Footer
   html += `<div class="footer">
-  Generated on ${new Date().toLocaleDateString()} by Health Family App.
+  Generated on ${new Date().toLocaleDateString()} by SymptomNest.
   This summary is for informational purposes and should be reviewed with a healthcare professional.
 </div>`;
 

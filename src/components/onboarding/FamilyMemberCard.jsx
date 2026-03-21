@@ -10,7 +10,12 @@ const ROLE_ICONS = {
 export default function FamilyMemberCard({ member, onDelete }) {
   return (
     <div className="member-card">
-      <div className="member-card-icon">{ROLE_ICONS[member.role] || '\u{1F9D1}'}</div>
+      <div className="member-card-icon">
+        {member.avatar
+          ? <img src={member.avatar} alt={member.name} className="member-avatar-sm" />
+          : (ROLE_ICONS[member.role] || '\u{1F9D1}')
+        }
+      </div>
       <div className="member-card-info">
         <h4>{member.name}</h4>
         <p>{member.role} &middot; {member.age} yrs &middot; {member.gender}</p>

@@ -9,7 +9,24 @@ const emptyForm = {
   gender: '',
   role: '',
   knownIssues: '',
+  avatar: null,
 };
+
+function resizeImage(dataUrl, maxSize, quality, callback) {
+  const img = new Image();
+  img.onload = () => {
+    let { width, height } = img;
+    if (width > maxSize || height > maxSize) {
+      if (width > height) { height = Math.round((height * maxSize) / width); width = maxSize; }
+      else { width = Math.round((width * maxSize) / height); height = maxSize; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src = dataUrl;
+}
 
 export default function FamilyMemberForm({ onAdd }) {
   const [form, setForm] = useState(emptyForm);
@@ -38,9 +55,22 @@ export default function FamilyMemberForm({ onAdd }) {
       gender: form.gender,
       role: form.role,
       knownIssues: form.knownIssues.trim(),
+      avatar: form.avatar || null,
     });
     setForm(emptyForm);
     setErrors({});
+  }
+
+  function handleAvatarUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resizeImage(reader.result, 400, 0.85, (resized) => {
+        handleChange('avatar', resized);
+      });
+    };
+    reader.readAsDataURL(file);
   }
 
   function handleChange(field, value) {
@@ -107,6 +137,23 @@ export default function FamilyMemberForm({ onAdd }) {
           placeholder="e.g., asthma, diabetes..."
           rows={2}
         />
+      </div>
+      <div className="form-group">
+        <label>Profile Photo (optional)</label>
+        <div className="avatar-upload-row">
+          {form.avatar
+            ? <img src={form.avatar} alt="Preview" className="avatar-preview" />
+            : <div className="avatar-placeholder">{form.name ? form.name[0].toUpperCase() : '?'}</div>
+          }
+          <div>
+            <input type="file" accept="image/*" onChange={handleAvatarUpload} />
+            {form.avatar && (
+              <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleChange('avatar', null)}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
       </div>
       <button type="submit" className="btn btn-primary">Add Member</button>
     </form>

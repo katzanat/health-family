@@ -13,6 +13,7 @@ import {
   getGrowthRecords, saveGrowthRecords,
   getMedications, saveMedications,
   getPeriodRecords, savePeriodRecords,
+  getAppointments, saveAppointments,
 } from './utils/storage';
 import {
   initFirebase,
@@ -27,6 +28,7 @@ import {
   writeGrowthRecords,
   writeMedications,
   writePeriodRecords,
+  writeAppointments,
   subscribeToFamily,
 } from './utils/firebase';
 import './App.css';
@@ -42,11 +44,13 @@ function App() {
   const [growthRecords, setGrowthRecords] = useState(() => getGrowthRecords());
   const [medications, setMedications] = useState(() => getMedications());
   const [periodRecords, setPeriodRecords] = useState(() => getPeriodRecords());
+  const [appointments, setAppointments] = useState(() => getAppointments());
   const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | synced | error
   const [view, setView] = useState(() => (getFamilyMembers().length > 0 ? 'dashboard' : 'onboarding'));
 
   const isRemoteUpdate = useRef(false);
   const unsubRef = useRef(null);
+  const justJoinedExisting = useRef(false);
 
   // ── Auth listener ──
   useEffect(() => {
@@ -72,8 +76,20 @@ function App() {
     unsubRef.current = subscribeToFamily(familyCode, {
       onMembers: (remoteMembers) => {
         isRemoteUpdate.current = true;
-        setMembers(remoteMembers);
-        saveFamilyMembers(remoteMembers);
+        setMembers((localMembers) => {
+          const localMap = {};
+          localMembers.forEach((m) => { localMap[m.id] = m; });
+          const merged = remoteMembers.map((rm) => ({
+            ...rm,
+            avatar: localMap[rm.id]?.avatar || undefined,
+          }));
+          saveFamilyMembers(merged);
+          return merged;
+        });
+        if (justJoinedExisting.current && remoteMembers.length > 0) {
+          justJoinedExisting.current = false;
+          setView('dashboard');
+        }
         setSyncStatus('synced');
       },
       onEntries: (remoteEntries) => {
@@ -85,6 +101,7 @@ function App() {
           const merged = remoteEntries.map((re) => ({
             ...re,
             image: localMap[re.id]?.image || undefined,
+            images: localMap[re.id]?.images || [],
           }));
           saveHealthEntries(merged);
           return merged;
@@ -125,6 +142,12 @@ function App() {
         isRemoteUpdate.current = true;
         setPeriodRecords(remotePeriodRecords);
         savePeriodRecords(remotePeriodRecords);
+        setSyncStatus('synced');
+      },
+      onAppointments: (remoteAppointments) => {
+        isRemoteUpdate.current = true;
+        setAppointments(remoteAppointments);
+        saveAppointments(remoteAppointments);
         setSyncStatus('synced');
       },
     });
@@ -226,6 +249,17 @@ function App() {
     }
   }, [periodRecords]);
 
+  useEffect(() => {
+    saveAppointments(appointments);
+    if (isRemoteUpdate.current) {
+      isRemoteUpdate.current = false;
+      return;
+    }
+    if (familyCode && user) {
+      writeAppointments(familyCode, appointments).catch(() => setSyncStatus('error'));
+    }
+  }, [appointments]);
+
   // ── Handlers ──
   function handleAddMember(member) {
     setMembers((prev) => [...prev, member]);
@@ -237,6 +271,10 @@ function App() {
 
   function handleSaveEntry(entry) {
     setEntries((prev) => [...prev, entry]);
+  }
+
+  function handleDeleteEntry(id) {
+    setEntries((prev) => prev.filter((e) => e.id !== id));
   }
 
   function handleMarkCheckupDone(memberId, checkupId, date) {
@@ -312,17 +350,41 @@ function App() {
     }));
   }
 
+  function handleAddAppointment(memberId, appointment) {
+    setAppointments((prev) => ({
+      ...prev,
+      [memberId]: [...(prev[memberId] || []), appointment],
+    }));
+  }
+
+  function handleDeleteAppointment(memberId, appointmentId) {
+    setAppointments((prev) => ({
+      ...prev,
+      [memberId]: (prev[memberId] || []).filter((a) => a.id !== appointmentId),
+    }));
+  }
+
+  function handleUpdateAppointment(memberId, appointmentId, updates) {
+    setAppointments((prev) => ({
+      ...prev,
+      [memberId]: (prev[memberId] || []).map((a) =>
+        a.id === appointmentId ? { ...a, ...updates } : a
+      ),
+    }));
+  }
+
   async function handleGetStarted() {
     try {
       await signInWithGoogle();
-    } catch (err) {
+    } catch {
       // User closed popup or error — stay on landing
     }
   }
 
-  function handleJoinFamily(code) {
+  function handleJoinFamily(code, isNewFamily = false) {
     setFamilyCode(code);
     saveFamilyCode(code);
+    justJoinedExisting.current = !isNewFamily;
     setView(members.length > 0 ? 'dashboard' : 'onboarding');
   }
 
@@ -396,6 +458,7 @@ function App() {
         entries={entries}
         checkupLogs={checkupLogs}
         onSaveEntry={handleSaveEntry}
+        onDeleteEntry={handleDeleteEntry}
         onMarkCheckupDone={handleMarkCheckupDone}
         onManageFamily={() => setView('onboarding')}
         familyCode={familyCode}
@@ -417,6 +480,10 @@ function App() {
         periodRecords={periodRecords}
         onAddPeriodRecord={handleAddPeriodRecord}
         onDeletePeriodRecord={handleDeletePeriodRecord}
+        appointments={appointments}
+        onAddAppointment={handleAddAppointment}
+        onDeleteAppointment={handleDeleteAppointment}
+        onUpdateAppointment={handleUpdateAppointment}
       />
     </div>
   );

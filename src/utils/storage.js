@@ -8,6 +8,7 @@ const KEYS = {
   GROWTH_RECORDS: 'healthFamily_growthRecords',
   MEDICATIONS: 'healthFamily_medications',
   PERIOD_RECORDS: 'healthFamily_periodRecords',
+  APPOINTMENTS: 'healthFamily_appointments',
 };
 
 function getJSON(key) {
@@ -20,7 +21,11 @@ function getJSON(key) {
 }
 
 function setJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // QuotaExceededError — silently ignore to prevent app crash
+  }
 }
 
 export function getFamilyMembers() {
@@ -97,4 +102,12 @@ export function getPeriodRecords() {
 
 export function savePeriodRecords(records) {
   setJSON(KEYS.PERIOD_RECORDS, records);
+}
+
+export function getAppointments() {
+  return getJSON(KEYS.APPOINTMENTS) || {};
+}
+
+export function saveAppointments(appointments) {
+  setJSON(KEYS.APPOINTMENTS, appointments);
 }

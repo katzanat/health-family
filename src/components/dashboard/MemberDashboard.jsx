@@ -5,6 +5,7 @@ import AllergySection from './AllergySection';
 import GrowthSection from './GrowthSection';
 import MedicationSection from './MedicationSection';
 import PeriodSection from './PeriodSection';
+import AppointmentSection from './AppointmentSection';
 import { exportForDoctor } from '../../utils/exportSummary';
 import { getRecommendedCheckups } from '../../data/checkupRecommendations';
 import { getCheckupStatus } from '../../utils/checkupUtils';
@@ -19,18 +20,20 @@ const ROLE_ICONS = {
 };
 
 export default function MemberDashboard({
-  member, entries, checkupLogs, onMarkCheckupDone, onAddEntry, onBack,
+  member, entries, checkupLogs, onMarkCheckupDone, onAddEntry, onDeleteEntry, onBack,
   dismissedCheckups, onDismissCheckup,
   allergies, onAddAllergy, onDeleteAllergy,
   growthRecords, onAddGrowthRecord, onDeleteGrowthRecord,
   medications, onAddMedication, onDeleteMedication,
   periodRecords, onAddPeriodRecord, onDeletePeriodRecord,
+  appointments, onAddAppointment, onDeleteAppointment, onUpdateAppointment,
 }) {
   const memberEntries = entries.filter((e) => e.memberId === member.id);
   const memberAllergies = allergies[member.id] || [];
   const memberGrowth = growthRecords[member.id] || [];
   const memberMedications = medications[member.id] || [];
   const memberPeriodRecords = periodRecords[member.id] || [];
+  const memberAppointments = appointments[member.id] || [];
 
   const memberCheckupLogs = checkupLogs[member.id] || {};
   const memberDismissed = dismissedCheckups[member.id] || [];
@@ -42,12 +45,13 @@ export default function MemberDashboard({
   }).length;
 
   const tabs = [
-    { id: 'entries', label: 'Entries', icon: '📋', count: memberEntries.length },
+    { id: 'entries', label: 'Symptoms', icon: '📋', count: memberEntries.length },
     { id: 'checkups', label: 'Checkups', icon: '✅', count: checkupAlertCount, countAlert: true },
     { id: 'allergies', label: 'Allergies', icon: '⚠️', count: memberAllergies.length },
     { id: 'medications', label: 'Medications', icon: '💊', count: memberMedications.length },
     { id: 'growth', label: 'Growth', icon: '📏', count: memberGrowth.length },
     ...(member.gender?.toLowerCase() === 'female' ? [{ id: 'period', label: 'Period', icon: '🌸', count: memberPeriodRecords.length }] : []),
+    { id: 'appointments', label: 'Appointments', icon: '🏥', count: memberAppointments.filter((a) => !a.outcome).length, countAlert: memberAppointments.filter((a) => a.date && new Date(a.date) < new Date() && !a.outcome).length > 0 },
   ];
 
   const [activeTab, setActiveTab] = useState('entries');
@@ -56,7 +60,12 @@ export default function MemberDashboard({
     <div className="member-dashboard">
       <button className="btn btn-secondary btn-sm" onClick={onBack}>&larr; Back to Family</button>
       <div className="member-profile">
-        <span className="member-profile-icon">{ROLE_ICONS[member.role] || '\u{1F9D1}'}</span>
+        <span className="member-profile-icon">
+          {member.avatar
+            ? <img src={member.avatar} alt={member.name} className="member-avatar-lg" />
+            : (ROLE_ICONS[member.role] || '\u{1F9D1}')
+          }
+        </span>
         <div>
           <h2>{member.name}</h2>
           <p>{member.role} &middot; {member.age} yrs &middot; {member.gender}</p>
@@ -88,13 +97,15 @@ export default function MemberDashboard({
         {activeTab === 'entries' && (
           <div className="entries-section">
             <div className="entries-header">
-              <h3>Health Entries</h3>
+              <h3>Symptoms</h3>
               <div className="entries-header-actions">
-                <button className="btn btn-primary" onClick={() => onAddEntry(member.id)}>+ Add Entry</button>
-                <button className="btn btn-secondary" onClick={() => exportForDoctor(member, entries, checkupLogs, memberAllergies, memberGrowth, memberMedications, memberPeriodRecords)}>Export for Doctor</button>
+                <button className="btn btn-primary" onClick={() => onAddEntry(member.id)}>+ Add Symptom</button>
+                <button className="btn btn-secondary btn-export" onClick={() => exportForDoctor(member, entries, checkupLogs, memberAllergies, memberGrowth, memberMedications, memberPeriodRecords)} title="Export health summary for doctor visit">
+                  ⬇ Export for Doctor
+                </button>
               </div>
             </div>
-            <HealthEntryList entries={memberEntries} members={[member]} />
+            <HealthEntryList entries={memberEntries} members={[member]} onDelete={onDeleteEntry} />
           </div>
         )}
 
@@ -138,6 +149,16 @@ export default function MemberDashboard({
             records={memberPeriodRecords}
             onAdd={(record) => onAddPeriodRecord(member.id, record)}
             onDelete={(recordId) => onDeletePeriodRecord(member.id, recordId)}
+          />
+        )}
+
+        {activeTab === 'appointments' && (
+          <AppointmentSection
+            appointments={memberAppointments}
+            memberName={member.name}
+            onAdd={(appt) => onAddAppointment(member.id, appt)}
+            onDelete={(apptId) => onDeleteAppointment(member.id, apptId)}
+            onUpdate={(apptId, updates) => onUpdateAppointment(member.id, apptId, updates)}
           />
         )}
       </div>

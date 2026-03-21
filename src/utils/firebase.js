@@ -3,6 +3,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -12,7 +13,6 @@ import {
   set,
   get,
   onValue,
-  push,
 } from 'firebase/database';
 
 let app = null;
@@ -39,9 +39,17 @@ export function initFirebase() {
 
 // ── Auth ──
 
+function isMobileBrowser() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
 export async function signInWithGoogle() {
   const { auth } = initFirebase();
   const provider = new GoogleAuthProvider();
+  if (isMobileBrowser()) {
+    await signInWithRedirect(auth, provider);
+    return null; // page will reload; onAuthStateChanged handles the rest
+  }
   const result = await signInWithPopup(auth, provider);
   return result.user;
 }
@@ -96,13 +104,26 @@ function mapToArray(map) {
 }
 
 function stripImages(entries) {
-  return entries.map(({ image, ...rest }) => rest);
+  return entries.map((entry) => {
+    const result = { ...entry };
+    delete result.image;
+    delete result.images;
+    return result;
+  });
+}
+
+function stripAvatars(members) {
+  return members.map((member) => {
+    const result = { ...member };
+    delete result.avatar;
+    return result;
+  });
 }
 
 export async function writeMembers(code, members) {
   const { db } = initFirebase();
   const membersRef = ref(db, `families/${code}/members`);
-  await set(membersRef, arrayToMap(members));
+  await set(membersRef, arrayToMap(stripAvatars(members)));
 }
 
 export async function writeEntries(code, entries) {
@@ -147,6 +168,12 @@ export async function writePeriodRecords(code, records) {
   await set(recordsRef, records);
 }
 
+export async function writeAppointments(code, appointments) {
+  const { db } = initFirebase();
+  const apptRef = ref(db, `families/${code}/appointments`);
+  await set(apptRef, appointments);
+}
+
 // ── Real-time subscriptions ──
 
 export function subscribeToFamily(code, callbacks) {
@@ -184,6 +211,10 @@ export function subscribeToFamily(code, callbacks) {
     callbacks.onPeriodRecords(snap.val() || {});
   });
 
+  const unsubAppointments = onValue(ref(db, `families/${code}/appointments`), (snap) => {
+    callbacks.onAppointments(snap.val() || {});
+  });
+
   return () => {
     unsubMembers();
     unsubEntries();
@@ -193,5 +224,6 @@ export function subscribeToFamily(code, callbacks) {
     unsubGrowth();
     unsubMedications();
     unsubPeriod();
+    unsubAppointments();
   };
 }
