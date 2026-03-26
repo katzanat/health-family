@@ -1,22 +1,104 @@
-# CLAUDE.md — Health Family App
+# CLAUDE.md — SymptomNest
 
-This file provides context for AI assistants working in this codebase.
+> Read this file at the start of every session before doing anything else.  
+> Check `tasks.md` second. Present a plan. Wait for approval before touching any code.
 
-## Project Overview
+---
 
-**Health Family** is a React SPA for tracking family health records. It supports multiple family members with shared real-time sync via Firebase. Key features include health entry logging, checkup reminders, allergy tracking, growth/BMI records, medication management, period/ovulation tracking, and doctor-visit export.
+## 🪺 Project Overview
+
+**SymptomNest** (formerly Health Family) is a warm, family-first symptom tracker React SPA.  
+Families share a join code, track symptoms per member, schedule follow-ups, log checkups, and export reports for doctor visits.
+
+- **Live URL:** https://health-family.vercel.app/
+- **Repo:** https://github.com/katzanat/health-family
+- **Branch:** `master` — auto-deploys to Vercel on push
 
 **Tech stack:** React 19, Vite 7, Firebase 12 (Auth + Realtime Database), CSS3 with custom properties, ESLint 9.
 
 ---
 
-## Development Commands
+## 📋 Session Protocol (follow every time)
+
+1. **Read `tasks.md`** — understand what's pending and what's done
+2. **Prioritize pending tasks** using 🔴 High / 🟡 Medium / 🟢 Low with a one-line reason each
+3. **Recommend a starting point** with rationale
+4. **Wait for explicit approval** before touching any code
+5. **Work one task at a time** — complete, test mentally, get approval
+6. **Mark task done** in `tasks.md` once approved
+7. **Move to next task** only after confirmation
+
+---
+
+## 🚫 Hard Rules
+
+- Never write or change code without explicit user approval
+- Never push to git — user handles all git commands
+- Never change Firebase config or authentication method without discussion
+- Never replace `signInWithRedirect` with popup — the redirect flow is intentional for mobile
+- Never exceed localStorage photo limits — always resize before storing (max 1200px / JPEG 80%)
+- Never make the UI feel clinical or cold — preserve the warm brand aesthetic
+- Always think mobile-first before suggesting any UI change
+
+---
+
+## 🎨 Brand & Design
+
+- **Name:** SymptomNest
+- **Icon:** 🪺
+- **Vibe:** Warm, friendly, family-first — not clinical
+- **Palette:** Terracotta, sage, blush, cream
+- **Typography:** Cormorant Garamond (headings) + DM Sans (body)
+- **Tone:** Caring, approachable, reassuring
+
+When making UI changes, always preserve this aesthetic. Avoid cold, sterile, or overly technical design decisions. Do not introduce new color palettes, fonts, or visual frameworks without discussion.
+
+---
+
+## 📱 Mobile Considerations
+
+The app is actively used on mobile. Always verify:
+- Touch targets minimum 44px
+- No horizontal scroll
+- Font sizes minimum 14px body, 16px on inputs (prevents iOS auto-zoom)
+- Thumb-friendly placement of primary actions
+- Adequate tap spacing between interactive elements
+- Test mentally on 375px width before proposing UI changes
+
+---
+
+## ✅ Working Features — Do Not Regress
+
+- Google sign-in with `signInWithRedirect` on mobile (critical)
+- Photo upload: resized to max 1200px / JPEG 80% before localStorage; `QuotaExceededError` handled gracefully
+- Up to 5 photos per symptom entry; backward compatible with single-image entries
+- Overdue items sorted first throughout all lists
+- "Needs Attention" panel on dashboard linking to overdue items per member
+- Hamburger menu: user name, family code copy, Manage Family, Leave Family, Sign Out
+- Google Calendar link on upcoming appointments
+- Export to doctor: HTML format with SymptomNest branding
+- Filter bar on symptoms: All / Overdue / Follow-up tabs
+- Forgot family code help screen
+- After entering family code, auto-redirect to dashboard when members exist
+
+---
+
+## 🔮 Future Work — Do Not Start Without Discussion
+
+These require external services and should be scoped separately:
+- Email notifications for follow-ups due → SendGrid or Firebase Cloud Functions
+- Email share of family join code → same dependency
+- AI symptom analysis (opt-in, photo + text) → Anthropic API integration
+
+---
+
+## 🛠 Development Commands
 
 ```bash
 npm run dev       # Start Vite dev server with HMR
 npm run build     # Production build (outputs to dist/)
 npm run preview   # Preview production build locally
-npm run lint      # Run ESLint
+npm run lint      # Run ESLint — run before committing
 ```
 
 No test runner is configured. There are no test files in the repository.
@@ -53,9 +135,9 @@ health-family/
 │   │   │   ├── CheckupList.jsx
 │   │   │   └── CheckupCard.jsx
 │   │   ├── dashboard/             # Main views
-│   │   │   ├── DashboardPage.jsx  # Family member grid
-│   │   │   ├── MemberDashboard.jsx # Tabbed member detail view
-│   │   │   ├── HealthEntryModal.jsx # Health log form (modal)
+│   │   │   ├── DashboardPage.jsx  # Family member grid + Needs Attention panel
+│   │   │   ├── MemberDashboard.jsx
+│   │   │   ├── HealthEntryModal.jsx
 │   │   │   ├── HealthEntryList.jsx
 │   │   │   ├── HealthEntryCard.jsx
 │   │   │   ├── AllergySection.jsx
@@ -68,23 +150,25 @@ health-family/
 │   │   │   ├── FamilyMemberList.jsx
 │   │   │   └── FamilyMemberCard.jsx
 │   │   ├── FamilyCodeScreen.jsx   # Create/join family with 6-char code
-│   │   └── LandingPage.jsx        # Marketing landing page
+│   │   └── LandingPage.jsx        # Pre-login landing page
 │   ├── data/
-│   │   ├── checkupRecommendations.js  # 31 age/gender-based checkup definitions
-│   │   └── vitaminRecommendations.js  # Vitamin/supplement data
+│   │   ├── checkupRecommendations.js
+│   │   └── vitaminRecommendations.js
 │   ├── utils/
-│   │   ├── firebase.js            # Firebase auth + Realtime DB operations
-│   │   ├── storage.js             # LocalStorage read/write helpers
-│   │   ├── checkupUtils.js        # Checkup status calculations (overdue/due-soon/up-to-date)
+│   │   ├── firebase.js            # Auth + Realtime DB operations
+│   │   ├── storage.js             # LocalStorage helpers
+│   │   ├── checkupUtils.js        # Checkup status calculations
 │   │   └── exportSummary.js       # Doctor-visit HTML export
-│   ├── App.jsx                    # Root: routing logic, all shared state
-│   ├── App.css                    # Component styles
-│   ├── main.jsx                   # React entry point
+│   ├── App.jsx                    # Root: routing, all shared state
+│   ├── App.css
+│   ├── main.jsx
 │   └── index.css                  # Global styles and CSS custom properties
-├── index.html                     # HTML shell
+├── index.html
+├── tasks.md                       # ← Task queue, always check this
+├── CLAUDE.md                      # ← This file
 ├── vite.config.js
-├── eslint.config.js               # ESLint flat config (v9)
-└── .env.example                   # Firebase config template
+├── eslint.config.js
+└── .env.example
 ```
 
 ---
@@ -93,9 +177,7 @@ health-family/
 
 ### State Management
 
-All application state lives in `App.jsx` as `useState` hooks — there is no Context API, Redux, Zustand, or similar. State is passed down as props.
-
-**State variables in App.jsx:**
+All state lives in `App.jsx` as `useState` hooks — no Context, Redux, or Zustand.
 
 | Variable | Type | Purpose |
 |---|---|---|
@@ -113,23 +195,20 @@ All application state lives in `App.jsx` as `useState` hooks — there is no Con
 
 ### Routing / Screen Logic
 
-`App.jsx` uses a series of conditional renders (not React Router):
+Conditional renders in `App.jsx` (no React Router):
 
 1. `user === undefined` → Loading spinner
 2. `user === null` → `<LandingPage>`
-3. `user` set + no `familyCode` → `<FamilyCodeScreen>`
+3. `user` + no `familyCode` → `<FamilyCodeScreen>`
 4. `user` + `familyCode` + no `members` → `<OnboardingPage>`
 5. `user` + `familyCode` + `members` → `<DashboardPage>`
 
 ### Persistence Strategy
 
-**Dual-layer sync:**
-- **LocalStorage** (via `utils/storage.js`) — primary offline persistence; images (base64) are only stored here.
-- **Firebase Realtime Database** — sync across devices/users; images are stripped before writing to Firebase.
-
-**Sync loop prevention:** An `isRemoteUpdate` ref in App.jsx prevents re-uploading data that just arrived from Firebase.
-
-**Debounced writes:** State changes trigger debounced Firebase writes to avoid excessive writes on rapid updates.
+- **LocalStorage** — primary offline persistence; images (base64) stored here only
+- **Firebase Realtime Database** — cross-device sync; images stripped before writing
+- **Sync loop prevention:** `isRemoteUpdate` ref in App.jsx prevents re-uploading data from Firebase
+- **Debounced writes:** rapid state changes are debounced before Firebase writes
 
 ---
 
@@ -137,99 +216,37 @@ All application state lives in `App.jsx` as `useState` hooks — there is no Con
 
 ### Family Member
 ```js
-{
-  id: string,           // Date.now().toString()
-  name: string,
-  age: number,          // 0–120
-  gender: "Male" | "Female" | "Other",
-  role: "Mom" | "Dad" | "Brother" | "Sister" | "Grandparent" | "Other",
-  knownIssues: string   // freetext, optional
-}
+{ id, name, age, gender: "Male"|"Female"|"Other", role, knownIssues }
 ```
 
 ### Health Entry
 ```js
-{
-  id: string,
-  memberId: string,
-  date: string,         // ISO 8601
-  bodyLocation: string, // value from BODY_REGIONS constant
-  image: string | undefined,  // base64; LocalStorage only, stripped from Firebase
-  duration: string,     // e.g. "2 days", "1 weeks"
-  description: string,
-  whatWasDone: string,
-  followUp: boolean,
-  followUpDate: string  // ISO 8601; only present if followUp === true
-}
+{ id, memberId, date, bodyLocation, image, duration, description, whatWasDone, followUp, followUpDate }
 ```
+`image` is base64, LocalStorage only, stripped from Firebase.
 
 ### Allergy
 ```js
-{
-  id: string,
-  allergen: string,
-  type: "Food" | "Drug" | "Environmental",
-  severity: "Mild" | "Moderate" | "Severe",
-  reaction: string
-}
+{ id, allergen, type: "Food"|"Drug"|"Environmental", severity: "Mild"|"Moderate"|"Severe", reaction }
 ```
 
 ### Growth Record
 ```js
-{
-  id: string,
-  date: string,         // ISO 8601
-  height: number,       // stored in cm
-  weight: number,       // stored in kg
-  unit: "metric" | "imperial"  // display preference at time of entry
-}
+{ id, date, height, weight, unit: "metric"|"imperial" }
 ```
 
 ### Medication
 ```js
-{
-  id: string,
-  name: string,
-  type: string,
-  dosage: string,
-  frequency: string
-}
+{ id, name, type, dosage, frequency }
 ```
 
 ### Period Record
 ```js
-// type = "period"
-{
-  id: string,
-  type: "period",
-  startDate: string,  // ISO 8601
-  endDate: string,    // ISO 8601
-  flow: string,
-  symptoms: string
-}
-
-// type = "ovulation"
-{
-  id: string,
-  type: "ovulation",
-  date: string,       // ISO 8601
-  notes: string
-}
+// Period: { id, type: "period", startDate, endDate, flow, symptoms }
+// Ovulation: { id, type: "ovulation", date, notes }
 ```
 
-### Checkup (from data/checkupRecommendations.js)
-```js
-{
-  id: string,
-  name: string,
-  frequencyMonths: number,
-  gender: "all" | "male" | "female",
-  minAge: number,
-  maxAge: number
-}
-```
-
-Checkup status is computed in `utils/checkupUtils.js`:
+### Checkup Status (computed in checkupUtils.js)
 - `overdue` — never done or past due date
 - `due-soon` — within 30 days of due date
 - `up-to-date` — more than 30 days until due
@@ -242,86 +259,60 @@ Checkup status is computed in `utils/checkupUtils.js`:
 families/
 └── {familyCode}/
     ├── createdAt
-    ├── members/         { memberId: memberObject }
-    ├── entries/         { entryId: entryObject }
-    ├── checkupLogs/     { memberId: { checkupId: dateString } }
-    ├── dismissedCheckups/ { memberId: [checkupIds] }
-    ├── allergies/       { memberId: [allergies] }
-    ├── growthRecords/   { memberId: [records] }
-    ├── medications/     { memberId: [medications] }
-    └── periodRecords/   { memberId: [records] }
+    ├── members/
+    ├── entries/
+    ├── checkupLogs/
+    ├── dismissedCheckups/
+    ├── allergies/
+    ├── growthRecords/
+    ├── medications/
+    └── periodRecords/
 ```
 
-**Authentication:** Google Sign-In only (`GoogleAuthProvider`). No email/password flow.
-
-**Family codes** are 6-character alphanumeric strings. Characters O, I, 0, 1 are excluded to avoid confusion.
+- Auth: Google Sign-In only (`GoogleAuthProvider`)
+- Family codes: 6-char alphanumeric, excluding O, I, 0, 1
 
 ---
 
 ## Code Conventions
 
-### Components
-- Functional components with hooks only — no class components.
-- One component per file; filename matches component name (PascalCase).
-- `.jsx` extension for all React files.
-- Event handlers use `handle*` prefix (e.g., `handleSubmit`). Callback props use `on*` prefix (e.g., `onSave`).
-
-### Constants
-- Uppercase names for arrays/objects of fixed values: `ROLES`, `GENDERS`, `BODY_REGIONS`.
-- ESLint is configured to allow unused variables starting with uppercase (constants used implicitly).
-
-### IDs
-- Always `Date.now().toString()` — timestamp-based, not UUIDs.
-
-### Firebase ↔ App data conversion
-- Firebase stores objects; member-keyed data (allergies, growth, etc.) uses `arrayToMap` / `mapToArray` helpers in `firebase.js`.
-- Entries use `{ entryId: entryObject }` maps in Firebase.
-
-### Styling
-- CSS files colocated at the top level (`App.css`, `index.css`); no CSS modules or CSS-in-JS.
-- Use existing CSS custom properties for colors/spacing (defined in `index.css`).
-- Do not introduce Tailwind, styled-components, or other styling frameworks.
-
-### ESLint
-- Flat config (ESLint 9+). Rules: `js.configs.recommended` + react-hooks + react-refresh.
-- Run `npm run lint` before committing.
+- Functional components + hooks only — no class components
+- One component per file, PascalCase filenames, `.jsx` extension
+- Event handlers: `handle*` prefix. Callback props: `on*` prefix
+- Constants: UPPER_CASE
+- IDs: `Date.now().toString()`
+- CSS: colocated in `App.css` / `index.css` — no CSS modules, no Tailwind, no CSS-in-JS
+- Use existing CSS custom properties from `index.css`
+- Run `npm run lint` before committing
 
 ---
 
-## Key Utility Files
+## Key Utility Functions
 
-### `src/utils/firebase.js`
-- `signInWithGoogle()` — triggers Google OAuth popup
-- `signOut()` — signs out current user
-- `onAuthStateChange(callback)` — subscribe to auth state
-- `generateFamilyCode()` — returns new 6-char code
-- `createFamily(code)` — creates Firebase node
-- `familyExists(code)` — returns boolean
-- `subscribeToFamily(code, callback)` — real-time listener
-- `updateFamilyData(code, data)` — writes all family data to Firebase
-
-### `src/utils/storage.js`
-- `saveToStorage(key, value)` / `loadFromStorage(key, defaultValue)` — JSON serialization wrappers
-- Constants for all storage keys (`STORAGE_KEYS.*`)
-
-### `src/utils/checkupUtils.js`
-- `getRecommendedCheckups(member)` — filters checkup list by age/gender
-- `getCheckupStatus(checkup, lastDate)` — returns `overdue` | `due-soon` | `up-to-date`
-
-### `src/utils/exportSummary.js`
-- `exportMemberSummary(member, data)` — opens a new browser window with a printable HTML report
+| File | Key exports |
+|---|---|
+| `firebase.js` | `signInWithGoogle`, `signOut`, `onAuthStateChange`, `generateFamilyCode`, `createFamily`, `familyExists`, `subscribeToFamily`, `updateFamilyData` |
+| `storage.js` | `saveToStorage`, `loadFromStorage`, `STORAGE_KEYS` |
+| `checkupUtils.js` | `getRecommendedCheckups(member)`, `getCheckupStatus(checkup, lastDate)` |
+| `exportSummary.js` | `exportMemberSummary(member, data)` |
 
 ---
 
-## Known Gaps / Areas for Improvement
+## Known Gaps (for future consideration)
 
-- **No tests** — no Jest, Vitest, or testing library configured. Consider adding Vitest (native Vite integration).
-- **No TypeScript** — the codebase uses plain JS/JSX. Types would significantly reduce bugs given the number of inter-component props.
-- **No error boundaries** — React crashes will show a blank screen.
-- **No CI/CD** — no GitHub Actions or deployment pipeline.
-- **Images stored as base64** — inefficient for large photos; Firebase Storage would be a better long-term solution.
-- **No input sanitization** — all user inputs go directly into state and Firebase. XSS via `dangerouslySetInnerHTML` in `exportSummary.js` is a known risk for the export HTML output.
-- **Firebase Security Rules** — not documented or included in the repo; ensure rules restrict read/write to authenticated users with their family code.
-- **Prop drilling** — all state lives in App.jsx and is passed many levels deep. React Context would help as the component tree grows.
-- **No pagination** — all entries/records are loaded into memory; may degrade for large datasets.
-- **Limited accessibility** — missing ARIA labels, alt text on images, and keyboard navigation in some interactive areas.
+- **No tests** — consider adding Vitest
+- **No TypeScript** — plain JS/JSX; types would reduce prop-drilling bugs
+- **No error boundaries** — React crashes show a blank screen
+- **No CI/CD** — no GitHub Actions configured
+- **Images as base64** — Firebase Storage would be better long-term
+- **XSS risk** — `dangerouslySetInnerHTML` in `exportSummary.js`
+- **Firebase Security Rules** — ensure rules restrict access to authenticated users by family code
+- **Prop drilling** — all state in App.jsx passed many levels deep; React Context would help
+- **No pagination** — all entries loaded into memory
+- **Limited accessibility** — missing ARIA labels, alt text, keyboard nav in some areas
+
+---
+
+## About the Owner
+
+Anat is a product leader with an engineering background. Be concise and direct. Present options when there are tradeoffs — don't decide unilaterally. Flag risks proactively (localStorage limits, Firebase quota, mobile regressions).
